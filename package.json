@@ -1,0 +1,19 @@
+{
+  "name": "agent-patterns",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A practical library of bounded, steerable agent execution patterns.",
+  "type": "module",
+  "scripts": {
+    "build": "bun run src/build.ts",
+    "check": "biome check . && tsc --noEmit && bun test && bun run build",
+    "deploy": "bun run build && alchemy deploy --stage prod"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.8",
+    "@cloudflare/workers-types": "latest",
+    "@types/bun": "latest",
+    "alchemy": "0.93.7",
+    "typescript": "6.0.3"
+  }
+}
