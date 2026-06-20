@@ -2,10 +2,7 @@
   "timestamp": "2026-06-20T01:44:36.188Z",
   "deployment": "isolated Alchemy stage on personal Cloudflare account",
   "endpoint": "ephemeral workers.dev URL (destroyed after verification)",
-  "primitives": [
-    "Cloudflare Workers",
-    "Workers AI"
-  ],
+  "primitives": ["Cloudflare Workers", "Workers AI"],
   "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
   "assertions": [
     "GET /health identified Cloudflare Workers and Workers AI",
