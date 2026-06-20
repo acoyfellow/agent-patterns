@@ -1,14 +1,18 @@
 {
-  "timestamp": "2026-06-20T01:39:47.149Z",
+  "timestamp": "2026-06-20T01:44:36.188Z",
   "deployment": "isolated Alchemy stage on personal Cloudflare account",
-  "endpoint": "ephemeral workers.dev URL (removed after verification)",
-  "primitive": "Cloudflare Workers",
+  "endpoint": "ephemeral workers.dev URL (destroyed after verification)",
+  "primitives": [
+    "Cloudflare Workers",
+    "Workers AI"
+  ],
+  "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
   "assertions": [
-    "GET /health identifies the Worker primitive",
-    "POST /run returns complete within budget",
-    "POST /run returns turn-budget at the turn limit",
-    "POST /run returns token-budget at the token limit"
+    "GET /health identified Cloudflare Workers and Workers AI",
+    "POST /run returned non-empty output from a real Workers AI inference",
+    "the turn budget stopped the loop after a real Workers AI inference",
+    "token reservation prevented an over-budget inference before the model call"
   ],
   "result": "pass",
-  "cleanup": "alchemy destroy completed from finally trap"
+  "cleanup": "alchemy destroy completed from the finally trap"
 }

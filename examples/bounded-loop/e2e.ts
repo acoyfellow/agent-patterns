@@ -10,42 +10,77 @@ try {
     .text();
   const endpoint = deployed.match(/E2E_URL=(https:\/\/\S+)/)?.[1];
   if (!endpoint) throw new Error(`deployment did not report URL: ${deployed}`);
-  const assert = async (name: string, path: string, init: RequestInit, expected: unknown) => {
+  const get = async (path: string, init: RequestInit = {}) => {
     const response = await fetch(`${endpoint}${path}`, init);
-    const body = await response.json();
-    if (!response.ok || JSON.stringify(body) !== JSON.stringify(expected))
-      throw new Error(`${name}: ${response.status} ${JSON.stringify(body)}`);
-    receipt.assertions.push(name);
+    const text = await response.text();
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      throw new Error(`${path}: ${response.status} non-JSON response: ${text.slice(0, 500)}`);
+    }
+    if (!response.ok) throw new Error(`${path}: ${response.status} ${JSON.stringify(body)}`);
+    return body;
   };
-  await assert(
-    'health identifies Worker primitive',
-    '/health',
-    {},
-    { ok: true, pattern: 'bounded-loop', primitive: 'Cloudflare Workers' },
-  );
+  const health = await get('/health');
+  if (!Array.isArray(health.primitives) || !health.primitives.includes('Workers AI')) {
+    throw new Error(`health did not identify Workers AI: ${JSON.stringify(health)}`);
+  }
+  receipt.assertions.push('health identifies Workers and Workers AI');
+
   const post = (body: unknown) => ({
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
-  await assert(
-    'completes within budget',
+  const complete = await get(
     '/run',
-    post({ maxTurns: 5, maxTokens: 20, tokensPerTurn: 2, completeAfter: 2 }),
-    { stop: 'complete', turns: 2, tokens: 4 },
+    post({
+      prompt: 'State that this inference ran on Workers AI.',
+      maxTurns: 2,
+      maxTokens: 256,
+      tokensPerTurn: 128,
+      completeAfter: 1,
+    }),
   );
-  await assert(
-    'stops at turn budget',
+  if (
+    complete.stop !== 'complete' ||
+    complete.turns !== 1 ||
+    !(complete.outputs as string[])?.[0]
+  ) {
+    throw new Error(`real inference did not complete: ${JSON.stringify(complete)}`);
+  }
+  receipt.assertions.push('Workers AI returned non-empty model output within budget');
+
+  const turnBudget = await get(
     '/run',
-    post({ maxTurns: 2, maxTokens: 20, tokensPerTurn: 2, completeAfter: 9 }),
-    { stop: 'turn-budget', turns: 2, tokens: 4 },
+    post({
+      prompt: 'Return a short progress update.',
+      maxTurns: 1,
+      maxTokens: 256,
+      tokensPerTurn: 128,
+      completeAfter: 2,
+    }),
   );
-  await assert(
-    'stops at token budget',
+  if (turnBudget.stop !== 'turn-budget' || !(turnBudget.outputs as string[])?.[0]) {
+    throw new Error(`turn budget failed: ${JSON.stringify(turnBudget)}`);
+  }
+  receipt.assertions.push('turn budget stops after a real Workers AI inference');
+
+  const tokenBudget = await get(
     '/run',
-    post({ maxTurns: 9, maxTokens: 3, tokensPerTurn: 3, completeAfter: 9 }),
-    { stop: 'token-budget', turns: 1, tokens: 3 },
+    post({
+      prompt: 'This call must not run.',
+      maxTurns: 2,
+      maxTokens: 64,
+      tokensPerTurn: 128,
+      completeAfter: 1,
+    }),
   );
+  if (tokenBudget.stop !== 'token-budget' || (tokenBudget.outputs as string[]).length !== 0) {
+    throw new Error(`token budget failed: ${JSON.stringify(tokenBudget)}`);
+  }
+  receipt.assertions.push('token reservation prevents an over-budget inference');
   console.log(
     JSON.stringify({ ...receipt, endpoint: 'ephemeral workers.dev URL', result: 'pass' }, null, 2),
   );

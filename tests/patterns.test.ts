@@ -1,31 +1,20 @@
 import { describe, expect, test } from 'bun:test';
-import { boundedLoop } from '../examples/bounded-loop.ts';
 import { patterns } from '../src/patterns.ts';
 
-describe('pattern catalog', () => {
-  test('has unique complete entries', () => {
+describe('proven pattern catalog', () => {
+  test('contains only the manifest-backed Cloudflare example', () => {
     expect(patterns.length).toBe(1);
+    expect(patterns[0]).toMatchObject({
+      slug: 'bounded-loop',
+      primitive: 'Cloudflare Workers + Workers AI',
+      source: 'examples/bounded-loop/worker.ts',
+    });
     expect(new Set(patterns.map(({ slug }) => slug)).size).toBe(patterns.length);
-    for (const pattern of patterns) expect(pattern.mechanism.length).toBeGreaterThanOrEqual(3);
   });
-});
 
-describe('bounded loop', () => {
-  test('stops at the turn budget', async () => {
-    const result = await boundedLoop(
-      { done: false, tokens: 0, value: '' },
-      { maxTurns: 2, maxTokens: 99 },
-      async (state) => ({ ...state, tokens: state.tokens + 1 }),
-    );
-    expect(result.stop).toBe('turn-budget');
-    expect(result.state.tokens).toBe(2);
-  });
-  test('returns completed work', async () => {
-    const result = await boundedLoop(
-      { done: false, tokens: 0, value: '' },
-      { maxTurns: 3, maxTokens: 99 },
-      async (state) => ({ ...state, done: true, value: 'evidence' }),
-    );
-    expect(result).toMatchObject({ stop: 'complete', state: { value: 'evidence' } });
+  test('does not claim local or simulated work', () => {
+    const catalog = JSON.stringify(patterns);
+    expect(catalog).not.toContain('simulated');
+    expect(catalog).toContain('env.AI.run');
   });
 });
