@@ -1,69 +1,43 @@
 # Agent Patterns
 
-A small, practical library for making agent execution bounded, steerable, observable, and cheaper to repeat. Read the visual field guide at **[agent-patterns.coey.dev](https://agent-patterns.coey.dev)**.
+A deliberately small catalog of agent execution patterns proven on Cloudflare. The generated field guide is live at **[agent-patterns.coey.dev](https://agent-patterns.coey.dev)**.
 
-The premise: use model tokens to discover and build durable structure—rules, tests, harnesses, plans—rather than paying a model to rediscover that structure on every run. Keep inference for the fuzzy remainder.
+The catalog contains only patterns with runnable source, an isolated Alchemy deployment, real HTTPS assertions, automatic cleanup, and a sanitized proof receipt. Ideas without that evidence are not advertised.
 
-## Quick start
+## Proven catalog
+
+| Pattern | Cloudflare primitive | Source and proof |
+|---|---|---|
+| Bound every loop | Workers | [`examples/bounded-loop`](examples/bounded-loop) |
+
+The Worker makes turn and token limits program properties and returns typed `complete`, `turn-budget`, or `token-budget` stop reasons. It does not call a model: the example proves the control mechanism without requiring a secret or pretending deterministic work is inference.
+
+## Verify
 
 ```sh
-git clone https://github.com/acoyfellow/agent-patterns.git
-cd agent-patterns
 bun install
 bun run check
+bun run e2e
 ```
 
-Open `dist/index.html` after the build, or inspect the runnable bounded-loop example in [`examples/bounded-loop.ts`](examples/bounded-loop.ts).
+`e2e` deploys a unique Alchemy stage to the authenticated Cloudflare account, makes live HTTPS requests, checks all three stop paths, and destroys the stage in `finally`. Cloudflare credentials are read from the local environment and are never exposed to the Worker.
 
-## The catalog
+## Repository map
 
-1. **Compile the fuzzy** — convert repeated judgment into deterministic checks.
-2. **Bound every loop** — make turns, tokens, and time explicit program properties.
-3. **Durable, flat workflow** — use named checkpointed steps instead of nested autonomy.
-4. **Steering envelope** — scope tools, outputs, evidence, and spend.
-5. **Harness before autonomy** — let real vertical tests define completion.
-6. **Human checkpoint** — suspend before irreversible or expensive effects.
+- `examples/bounded-loop/manifest.ts` — canonical metadata consumed by the site
+- `examples/bounded-loop/worker.ts` — runnable Cloudflare Worker
+- `examples/bounded-loop/alchemy.run.ts` — isolated deployment
+- `examples/bounded-loop/e2e.ts` — live probes and cleanup trap
+- `examples/bounded-loop/evidence/` — sanitized live receipt
+- `src/build.ts` — static site generator from proven manifests
+- `worker.ts` / `alchemy.run.ts` — binding-free static site Worker and custom domain
 
-These compose. A production review loop might compile style rules into AST checks, run uncertain findings through a bounded agent inside a steering envelope, checkpoint each review in a Workflow, and request human approval before publishing.
-
-## Apply a pattern
-
-Start with the constraint, not the framework:
-
-- repeated model judgment → **Compile the fuzzy**
-- uncertain runtime or spend → **Bound every loop**
-- retries and recovery → **Durable, flat workflow**
-- broad capabilities → **Steering envelope**
-- objectively testable goal → **Harness before autonomy**
-- irreversible side effect → **Human checkpoint**
-
-Copy the smallest mechanism that changes the failure mode. Keep stop reasons and evidence in your domain types. Test budget exhaustion as carefully as success.
-
-## Project map
-
-- `src/patterns.ts` — structured catalog and source snippets
-- `src/build.ts` — deterministic static-site generator
-- `examples/` — runnable TypeScript implementations
-- `tests/` — behavior and catalog validation
-- `public/` — visual system
-- `worker.ts` / `alchemy.run.ts` — static Cloudflare Worker and custom domain
-
-## Deploy
-
-The site is static and has no secrets, service bindings, forms, analytics, or runtime data. Alchemy publishes the generated assets to a Cloudflare Worker:
+## Deploy the site
 
 ```sh
-CLOUDFLARE_ACCOUNT_ID=... CLOUDFLARE_API_TOKEN=... bun run deploy
+bun run deploy
 ```
 
-Use a narrowly scoped token with Workers Scripts and Zone edit access. `SITE_HOSTNAME` can override the default domain.
-
-## Design notes
-
-The visual language borrows the AX shape: dark technical surfaces, physical borders, compact mono labels, blue information, and Cloudflare orange for action. The catalog itself grew from a conversation about flattening loops: invest tokens in plans, static rules, vertical harnesses, and guardrails; then execute the remainder as a bounded workflow.
-
-## Contributing and security
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). For vulnerabilities, follow [SECURITY.md](SECURITY.md) instead of opening a public issue.
+The public site has static assets only: no secrets, forms, analytics, or sensitive bindings. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
 MIT © Jordan Coeyman

@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-06-20T01:39:47.149Z",
+  "deployment": "isolated Alchemy stage on personal Cloudflare account",
+  "endpoint": "ephemeral workers.dev URL (removed after verification)",
+  "primitive": "Cloudflare Workers",
+  "assertions": [
+    "GET /health identifies the Worker primitive",
+    "POST /run returns complete within budget",
+    "POST /run returns turn-budget at the turn limit",
+    "POST /run returns token-budget at the token limit"
+  ],
+  "result": "pass",
+  "cleanup": "alchemy destroy completed from finally trap"
+}

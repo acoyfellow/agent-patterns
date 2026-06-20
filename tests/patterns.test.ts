@@ -4,7 +4,7 @@ import { patterns } from '../src/patterns.ts';
 
 describe('pattern catalog', () => {
   test('has unique complete entries', () => {
-    expect(patterns.length).toBe(6);
+    expect(patterns.length).toBe(1);
     expect(new Set(patterns.map(({ slug }) => slug)).size).toBe(patterns.length);
     for (const pattern of patterns) expect(pattern.mechanism.length).toBeGreaterThanOrEqual(3);
   });
